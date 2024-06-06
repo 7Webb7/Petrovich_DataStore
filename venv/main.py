@@ -1,11 +1,26 @@
 import pandas as pd
+import telebot
+import datetime
 
-data = {
-    'UserID': [12345, 12345, 67890, 12345],
-    'Timestamp': ['2024-06-06 12:34:56', '2024-06-06 12:35:10', '2024-06-06 12:36:00', '2024-06-06 12:37:22'],
-    'MessageID': [1, 2, 1, 3],
-    'Message': ['Привет!', 'Как дела?', 'Добрый день!', 'Все хорошо, спасибо!']
-}
+with open('bot_token.txt', 'r', encoding='utf-8') as file:
+    token = file.read()
+
+data = pd.read_csv('petrovich_log.csv')
 df = pd.DataFrame(data)
 
-df.to_csv('petrovich_log.csv', index=False)
+bot = telebot.TeleBot(token)
+@bot.message_handler(commands=['/start'])
+def start_handle(message):
+    bot.send_message(message.chat.id, 'Привет, меня зовут Петрович. Нужно что?')
+@bot.message_handler(content_types= 'text')
+def storing_handle(message):
+    global df
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    df.loc[len(df.index)] = [message.from_user.id, timestamp, message.message_id, message.text]
+    df.to_csv('petrovich_log.csv', index=False)
+    bot.reply_to(message, 'Сообщение записано.')
+
+bot.polling(non_stop= True)
+
+
+
