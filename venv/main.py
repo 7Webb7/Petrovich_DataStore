@@ -30,19 +30,14 @@ def handle_show_messages(message):
             break
     message_string = ""
     for messages, user in unique_messages.items():
-        message_string += f'Пользователь: {user['Username']}'
-        message_string += '\t'
-        message_string += f'ID: {user['UserID']}'
-        message_string += '\t'
-        message_string += f'Сообщение: {messages}'
-        message_string += '\t'
+        message_string += f'Пользователь: {user['Username']}\t ID: {user['UserID']} \n\nСообщение: {messages} \n\n\n'
     bot.send_message(message.chat.id, message_string)
 
 
 
 @bot.message_handler(content_types= 'text')
 def storing_handle(message):
-    if message.text in known_commands:
+    if message.text in known_commands or message.text.startswith('/'):
         return
     global df
 
