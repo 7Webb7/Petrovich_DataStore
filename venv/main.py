@@ -28,8 +28,15 @@ def handle_show_messages(message):
         # Если набрали 10 уникальных сообщений, выходим из цикла
         if len(unique_messages) == 10:
             break
+    message_string = ""
     for messages, user in unique_messages.items():
-        bot.send_message(message.chat.id, f'Пользователь {user['Username']} (ID: {user['UserID']}) написал: "{messages}"')
+        message_string += f'Пользователь: {user['Username']}'
+        message_string += '\t'
+        message_string += f'ID: {user['UserID']}'
+        message_string += '\t'
+        message_string += f'Сообщение: {messages}'
+        message_string += '\t'
+    bot.send_message(message.chat.id, message_string)
 
 
 
