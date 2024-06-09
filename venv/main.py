@@ -5,12 +5,18 @@ import numpy as np
 with open('bot_token.txt', 'r', encoding='utf-8') as file:
     token = file.read()
 
-
-data = pd.read_csv('petrovich_log.csv')
-
-df = pd.DataFrame(data)
-known_commands = ['/start', '/messages', '/help']
+try:
+    df = pd.read_csv('petrovich_log.csv')
+except:
+    df = pd.DataFrame(columns=['Username', 'UserID', 'Message'])
+    df.to_csv('petrovich_log.csv')
 bot = telebot.TeleBot(token)
+
+def cut_df():
+    global df
+    if len(df) > 5:
+        df = df.iloc[-5:]
+
 
 @bot.message_handler(commands=['start'])
 def start_handle(message):
@@ -35,8 +41,24 @@ def handle_show_messages(message):
     for messages, user in unique_messages.items():
         message_string += f'Пользователь: {user['Username']}\t ID: {user['UserID']} \n\nСообщение: {messages} \n\n\n'
     bot.send_message(message.chat.id, message_string)
+    cut_df()
     df.loc[len(df.index)] = [message.from_user.username, message.from_user.id, '/messages']
     df.to_csv('petrovich_log.csv', index=False)
+
+@bot.message_handler(commands = ['counter'])
+def give_counter(message):
+    number_of_messages =  len(df[df['UserID'] == message.from_user.id])
+    user_status = ''
+    if number_of_messages < 10:
+        user_status = 'Слабовато.'
+    if number_of_messages > 50:
+        user_status = 'Вы - начинающий Петрович.'
+    if number_of_messages > 200:
+        user_status = 'Настоящий Петрович.'
+    if number_of_messages > 800:
+        user_status = 'Хватит спамить, Петрович.'
+
+    bot.reply_to(message, f'Вы написали {number_of_messages} сообщений. {user_status}')
 
 @bot.message_handler(commands = ['getcommands'])
 def handle_commands(message):
@@ -57,7 +79,7 @@ def handle_commands(message):
     for messages, user in commands.items():
         message_string += f'Пользователь: {user['Username']}\t ID: {user['UserID']} \n\nИспользовал: {user['Message']} \n\n\n'
     bot.send_message(message.chat.id, message_string)
-
+    cut_df()
     df.loc[len(df.index)] = [message.from_user.username, message.from_user.id, '/getcommands']
     df.to_csv('petrovich_log.csv', index=False)
 
@@ -66,7 +88,7 @@ def storing_handle(message):
     if message.text.startswith('/'):
         return
     global df
-
+    cut_df()
     df.loc[len(df.index)] = [message.from_user.username, message.from_user.id, message.text]
     df.to_csv('petrovich_log.csv', index=False)
 
@@ -76,6 +98,3 @@ def storing_handle(message):
 
 
 bot.polling(non_stop= True)
-
-
-
