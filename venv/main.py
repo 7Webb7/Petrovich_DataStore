@@ -18,6 +18,7 @@ def cut_df(): #перезапись при достижении лимита
     if len(df) > 300:
         df = df.iloc[-300:]
 
+known_coms = ['/help', '/getcommands', '/messages', '/start']
 
 @bot.message_handler(commands=['start'])
 def start_handle(message):
@@ -89,9 +90,9 @@ def handle_commands(message):
     df.loc[len(df.index)] = [message.from_user.username, message.from_user.id, '/getcommands']
     df.to_csv('petrovich_log.csv', index=False)
 
-@bot.message_handler(content_types= ['text', 'commands'])
+@bot.message_handler(content_types= ['text'])
 def storing_handle(message):
-    if message.text.startswith('/'):
+    if message.text.startswith('/') and message.text in known_coms:
         return
     global df
     cut_df()
