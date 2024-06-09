@@ -2,7 +2,7 @@ import pandas as pd
 import telebot
 import numpy as np
 
-with open('bot_token.txt', 'r', encoding='utf-8') as file:
+with open('venv/bot_token.txt', 'r', encoding='utf-8') as file:
     token = file.read()
 
 try:
