@@ -12,17 +12,23 @@ except:
     df.to_csv('petrovich_log.csv')
 bot = telebot.TeleBot(token)
 
-def cut_df():
+
+def cut_df(): #перезапись при достижении лимита
     global df
-    if len(df) > 5:
-        df = df.iloc[-5:]
+    if len(df) > 300:
+        df = df.iloc[-300:]
 
 
 @bot.message_handler(commands=['start'])
 def start_handle(message):
     bot.send_message(message.chat.id, 'Привет, меня зовут Петрович. Нужно что?')
 
-
+@bot.message_handler(commands=['help'])
+def handle_help(message):
+    bot.send_message(message.chat.id, '/messages - получить список последних 10 уникальных сообщений \n /getcommands - получить список последних использованных команд.')
+    cut_df()
+    df.loc[len(df.index)] = [message.from_user.username, message.from_user.id, '/help']
+    df.to_csv('petrovich_log.csv', index=False)
 @bot.message_handler(commands = ['messages'])
 def handle_show_messages(message):
     global df
