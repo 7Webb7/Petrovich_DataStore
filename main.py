@@ -2,6 +2,9 @@ import pandas as pd
 import telebot
 import numpy as np
 
+#запись в начале отдельной функцией, а в конце уже cuf_df
+
+
 with open('venv/bot_token.txt', 'r', encoding='utf-8') as file:
     token = file.read()
 
@@ -13,29 +16,36 @@ except:
 bot = telebot.TeleBot(token)
 
 
-def cut_df(): #перезапись при достижении лимита
+def cut_df():  #перезапись при достижении лимита
     global df
     if len(df) > 300:
         df = df.iloc[-300:]
 
+
 known_coms = ['/help', '/getcommands', '/messages', '/start']
+
 
 @bot.message_handler(commands=['start'])
 def start_handle(message):
     bot.send_message(message.chat.id, 'Привет, меня зовут Петрович. Нужно что?')
 
+
 @bot.message_handler(commands=['help'])
 def handle_help(message):
-    bot.send_message(message.chat.id, '/messages - получить список последних 10 уникальных сообщений \n /getcommands - получить список последних использованных команд.')
+    bot.send_message(message.chat.id,
+                     '/messages - получить список последних 10 уникальных сообщений \n /getcommands - получить список '
+                     'последних использованных команд.')
     cut_df()
     df.loc[len(df.index)] = [message.from_user.username, message.from_user.id, '/help']
     df.to_csv('petrovich_log.csv', index=False)
-@bot.message_handler(commands = ['messages'])
+
+
+@bot.message_handler(commands=['messages'])
 def handle_show_messages(message):
     global df
     unique_messages = {}
     for index, row in df[::-1].iterrows():
-        if row['Message'].startswith('/'):
+        if row['Message'].startswith('/') and row['Message'] in known_coms:
             continue
         if row['Message'] in unique_messages:
             continue
@@ -52,9 +62,10 @@ def handle_show_messages(message):
     df.loc[len(df.index)] = [message.from_user.username, message.from_user.id, '/messages']
     df.to_csv('petrovich_log.csv', index=False)
 
-@bot.message_handler(commands = ['counter'])
+
+@bot.message_handler(commands=['counter'])
 def give_counter(message):
-    number_of_messages =  len(df[df['UserID'] == message.from_user.id])
+    number_of_messages = len(df[df['UserID'] == message.from_user.id])
     user_status = ''
     if number_of_messages < 10:
         user_status = 'Слабовато.'
@@ -67,7 +78,8 @@ def give_counter(message):
 
     bot.reply_to(message, f'Вы написали {number_of_messages} сообщений. {user_status}')
 
-@bot.message_handler(commands = ['getcommands'])
+
+@bot.message_handler(commands=['getcommands'])
 def handle_commands(message):
     global df
     commands = {}
@@ -90,7 +102,8 @@ def handle_commands(message):
     df.loc[len(df.index)] = [message.from_user.username, message.from_user.id, '/getcommands']
     df.to_csv('petrovich_log.csv', index=False)
 
-@bot.message_handler(content_types= ['text'])
+
+@bot.message_handler(content_types=['text'])
 def storing_handle(message):
     if message.text.startswith('/') and message.text in known_coms:
         return
@@ -99,9 +112,7 @@ def storing_handle(message):
     df.loc[len(df.index)] = [message.from_user.username, message.from_user.id, message.text]
     df.to_csv('petrovich_log.csv', index=False)
 
-
-
     bot.reply_to(message, 'Сообщение записано.')
 
 
-bot.polling(non_stop= True)
+bot.polling(non_stop=True)
