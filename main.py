@@ -11,7 +11,7 @@ client = gspread.authorize(creds)
 with open('venv/bot_token.txt', 'r', encoding='utf-8') as file:
     token = file.read()
 
-
+#iniini
 
 try:
     df = pd.read_csv('petrovich_log.csv')
