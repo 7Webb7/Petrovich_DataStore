@@ -1,12 +1,17 @@
 import pandas as pd
 import telebot
-import numpy as np
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
-#запись в начале отдельной функцией, а в конце уже cuf_df
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name('Petrovich_Credentials.json', scope)
+client = gspread.authorize(creds)
 
 
 with open('venv/bot_token.txt', 'r', encoding='utf-8') as file:
     token = file.read()
+
+
 
 try:
     df = pd.read_csv('petrovich_log.csv')
@@ -15,6 +20,21 @@ except:
     df.to_csv('petrovich_log.csv')
 bot = telebot.TeleBot(token)
 
+sheet_name = "Petrovich_Datasheet"
+spreadsheet_url = 'https://docs.google.com/spreadsheets/d/15M3Oc1t1eT84wOgPTMUX15kJWtP2e1y67lr16xNcLQ0/edit#gid=0'
+
+try:
+    spreadsheet = client.open_by_url(spreadsheet_url)
+    sheet = spreadsheet.sheet1
+    print(f"Found existing Google Sheet at '{spreadsheet_url}'.")
+except gspread.exceptions.SpreadsheetNotFound:
+    print(f"Google Sheet at '{spreadsheet_url}' not found.")
+
+
+sheet.update([df.columns.values.tolist()] + df.values.tolist())
+spreadsheet_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet.id}"
+print(f'Data successfully written to {sheet_name}')
+print(f'Google Sheet URL: {spreadsheet_url}')
 
 def cut_df():  #перезапись при достижении лимита
     global df
@@ -38,7 +58,7 @@ def handle_help(message):
     cut_df()
     df.loc[len(df.index)] = [message.from_user.username, message.from_user.id, '/help']
     df.to_csv('petrovich_log.csv', index=False)
-
+    sheet.update([df.columns.values.tolist()] + df.values.tolist())
 
 @bot.message_handler(commands=['messages'])
 def handle_show_messages(message):
@@ -61,7 +81,7 @@ def handle_show_messages(message):
     cut_df()
     df.loc[len(df.index)] = [message.from_user.username, message.from_user.id, '/messages']
     df.to_csv('petrovich_log.csv', index=False)
-
+    sheet.update([df.columns.values.tolist()] + df.values.tolist())
 
 @bot.message_handler(commands=['counter'])
 def give_counter(message):
@@ -101,7 +121,7 @@ def handle_commands(message):
     cut_df()
     df.loc[len(df.index)] = [message.from_user.username, message.from_user.id, '/getcommands']
     df.to_csv('petrovich_log.csv', index=False)
-
+    sheet.update([df.columns.values.tolist()] + df.values.tolist())
 
 @bot.message_handler(content_types=['text'])
 def storing_handle(message):
@@ -113,6 +133,6 @@ def storing_handle(message):
     df.to_csv('petrovich_log.csv', index=False)
 
     bot.reply_to(message, 'Сообщение записано.')
-
+    sheet.update([df.columns.values.tolist()] + df.values.tolist())
 
 bot.polling(non_stop=True)
